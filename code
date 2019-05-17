@@ -1,0 +1,29 @@
+import os
+import arcpy
+
+def fix_name(name):
+     replace = '_'
+     reserved_chars = [u'<', u'>', u':', u'"', u'/', u'|', u'?', u'*']  # u'\\' is reserved, but we use as directory separator
+     reserved_words = [u'CON', u'PRN', u'AUX', u'NUL',
+                       u'COM1', u'COM2', u'COM3', u'COM4', u'COM5', u'COM6', u'COM7', u'COM8', u'COM9',
+                       u'LPT1', u'LPT2', u'LPT3', u'LPT4', u'LPT5', u'LPT6', u'LPT7', u'LPT8', u'LPT9']
+
+     for char in reserved_chars:
+          name = name.replace(char, replace)
+
+     name = os.sep.join([replace + b + replace if b.upper() in reserved_words else b for b in name.split(os.sep)])
+
+     return name
+
+basepath = r'C:\Users\Anneka\Dropbox (The Rivers Trust)\CaBA_Data_Phase5\Layers'
+mxd = arcpy.mapping.MapDocument("CURRENT")  # "("CURRENT")
+for lyr in arcpy.mapping.ListLayers(mxd):
+     name = fix_name(lyr.longName)
+     if lyr.isGroupLayer:
+          grpPath = os.path.join(basepath, name)
+          if not os.path.exists(grpPath):
+               os.makedirs(grpPath)
+     else:
+          fn = os.path.join(basepath, name + ".lyr")
+          lyr.saveACopy(fn)
+          print("Saved: " + fn)
